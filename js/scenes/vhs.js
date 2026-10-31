@@ -12,7 +12,7 @@ import { AUD, SFX } from '../core/audio.js';
 export const vid = document.getElementById('vid');
 const videoTex = new THREE.VideoTexture(vid);
 export const vhs = { playerG:null, body:null, front:null, slot:null, flapPivot:null, flap:null, cavLight:null, glows:[], reelGlows:[], reelRings:[], antGlow:null,
-  screenG:null, scrPlane:null, bezel:null };
+  top:null, screenG:null, scrPlane:null, bezel:null };
 
 /* ---------- build ---------- */
 export function buildPlayer(){
@@ -23,7 +23,11 @@ export function buildPlayer(){
   const side = litMat(T.player_side, { sat:.06 });
   const geo = new THREE.BoxGeometry(1, ar, depth);
   const uv = geo.attributes.uv; for (let i = 4; i < 8; i++) uv.setX(i, 1 - uv.getX(i)); uv.needsUpdate = true;   // 왼쪽 면은 측면도를 뒤집어
-  const body = vhs.body = new THREE.Mesh(geo, [side, side, dark, dark, front, dark]);
+  const pos = geo.attributes.position; for (let i = 8; i < 12; i++) pos.setY(i, ar/2 - P3.top*ar); pos.needsUpdate = true;   // 윗면은 손잡이 꼭대기가 아니라 몸체 높이에 (손잡이 뒤에 판이 떠 보이지 않게)
+  // 윗면: 정면도에서 손잡이 바로 아래 금속 띠를 이어 붙인다 (앞 모서리 = 띠의 위쪽) — 맨 단색 판으로 보이지 않게
+  const top = vhs.top = litMat(T.player_front, { sat:.06 });
+  for (const [i, u, v] of [[8, .33, .19], [9, .97, .19], [10, .33, .11], [11, .97, .11]]) uv.setXY(i, u, 1 - v);
+  const body = vhs.body = new THREE.Mesh(geo, [side, side, top, dark, front, dark]);
   body.castShadow = body.receiveShadow = true; g.add(body);
 
   // 슬롯: 정면도의 카세트 창을 실제로 뚫고, 안쪽은 어두운 공간
@@ -135,7 +139,7 @@ export function updateVhs(P_){
     const k = seg(P_, .358, .38);
     flapPivot.rotation.x = 1.15*ss(seg(k, .02, .3))*(1 - ss(seg(P_, .38, .387)));
     const on = V.boot < 0 ? 0 : ss(clamp(V.boot/.55));
-    for (const m of [front, flap.material]) { m.userData.uSat.value = lerp(.06, 1, on); m.emissiveIntensity = lerp(.3, .5, on)*(1 + bump(V.boot, 0, .25)*.6); }
+    for (const m of [front, flap.material, vhs.top]) { m.userData.uSat.value = lerp(.06, 1, on); m.emissiveIntensity = lerp(.3, .5, on)*(1 + bump(V.boot, 0, .25)*.6); }
     flap.material.color.setScalar(P_ < .37 ? .28 : lerp(.28, 1, ss(seg(P_, .372, .386))));   // 빈 창은 어둡게 → 테이프가 들어가면 카세트가 보인다
     glows.forEach(g => g.material.opacity = on*(.5 + env*.4));
     reelGlows.forEach(g => g.material.opacity = on*(.55 + env*.4));
