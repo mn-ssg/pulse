@@ -1,0 +1,23 @@
+/* Layout: 기준 1920×1080(16:9). 캔버스 크기는 game.js의 fit()이 창에 맞춰 정한다 — 16:10~21:9 창은 가로 시야를 넓혀 빈틈없이 채우고,
+   그보다 극단적인 비율에서만 남는 쪽이 게임의 밤색 여백이 된다. */
+
+/* ================= 기본 ================= */
+:root{
+  --void:#02060a;
+  --label:#bdf3ee;
+  color-scheme:dark;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0;background:var(--void);color:var(--label);overflow:hidden}
+body{padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}
+img{max-width:100%}
+[hidden]:not([hidden=until-found i]){display:none!important}
+
+/* ================= 전체 화면 ================= */
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--void);overflow:hidden}
+.screen canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;user-select:none;-webkit-user-select:none}
+.screen::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 62%,rgba(0,0,0,.42) 100%)}
+.screen::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(125deg,rgba(255,255,255,.06),transparent 28%)}

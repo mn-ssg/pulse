@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PULSE</title>
+<meta name="description" content="PULSE — 음악의 비트가 전류가 되어 멈춰 있던 도시를 다시 움직이게 한다. IDIOTAPE 애니메이션과 게임 3종의 3D 인터랙티브 웹사이트">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@800;900&family=Inter:wght@700;900&family=JetBrains+Mono:wght@500&family=Noto+Sans+KR:wght@500;700&family=Press+Start+2P&family=Silkscreen:wght@700&display=swap">
+<link rel="stylesheet" href="css/main.css">
+<link rel="modulepreload" href="js/vendor/three.module.min.js">
+<link rel="preload" as="image" href="assets/images/brand/pulse-logo.webp">
+<link rel="preload" as="image" href="assets/images/tape/tape-front.webp" crossorigin>
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<div id="track" aria-hidden="true"></div>
+<canvas id="gl" aria-label="PULSE 3D 장면"></canvas>
+
+<div class="ui">
+  <header class="bar">
+    <button id="sound" aria-pressed="true" type="button">SOUND ON</button>
+  </header>
+
+  <section class="ov" id="ov-intro" aria-label="인트로">
+    <div class="hint" aria-hidden="true"><span class="reel"></span></div>
+  </section>
+
+  <!-- 01 Figma PULSE_logo: 인트로의 중심. 형태는 그대로, 빛만 움직인다 (js/scenes/pulse.js) -->
+  <div class="logo" id="logo">
+    <span class="logo-glow"></span>
+    <img src="assets/images/brand/pulse-logo.webp" alt="PULSE" width="1317" height="256">
+    <span class="logo-sweep"></span>
+    <span class="logo-ring"></span><span class="logo-ring"></span><span class="logo-ring"></span><span class="logo-ring"></span>
+  </div>
+
+  <!-- 02 Figma '20 · 우선순위' — NAMING CONCEPT · SETTING PRIORITIES를 타이포그래피로 (js/ui/typography.js) -->
+  <section class="type" id="type" aria-label="PULSE — Naming Concept · Setting Priorities">
+    <div class="ty ty-naming" data-p=".03 .088">
+      <p class="ty-label" data-t=".1 .3 .72 .9">NAMING CONCEPT</p>
+      <ul class="ty-trio" data-t=".3 .55 .72 .9">
+        <li><b>HEARTBEAT</b><span>맥박</span></li><li><b>BEAT</b><span>박동</span></li><li><b>ELECTRIC SIGNAL</b><span>전기적 신호</span></li>
+      </ul>
+    </div>
+    <div class="ty ty-beat" data-p=".082 .12">
+      <p class="ty-note" data-t=".12 .32 .66 .82">음악의 <b>비트</b>가</p>
+      <strong class="ty-xl" data-fx="shrink" data-fit=".8" data-t=".02 .2 .72 .98">BEAT</strong>
+    </div>
+    <div class="ty ty-elec" data-p=".113 .153">
+      <span class="ty-from" data-t="0 .12 .78 .95">BEAT</span>
+      <i class="ty-arrow" data-t=".08 .3 .78 .95"></i>
+      <strong class="ty-xl" data-fx="clip" data-fit=".92" data-split data-t=".18 .48 .8 .97">ELECTRICITY</strong>
+      <p class="ty-note" data-t=".38 .56 .8 .97"><b>전류</b>가 되고,</p>
+    </div>
+    <div class="ty ty-city" data-p=".148 .192">
+      <strong class="ty-xl ty-city-word" data-fit=".62" data-text="CITY" data-t=".02 .2 .82 .98">CITY<i class="ty-current"></i></strong>
+      <p class="ty-note" data-t=".18 .36 .82 .98">전류가 <b>멈춰 있던 도시</b>를<br>다시 움직이게 한다</p>
+    </div>
+    <div class="ty ty-energy" data-p=".188 .225">
+      <strong class="ty-xl" data-fx="scale" data-fit=".8" data-text="ENERGY" data-t=".02 .25 .8 .97">ENERGY</strong>
+      <p class="ty-note" data-t=".3 .5 .8 .97">단순한 전기 신호가 아닌,<br><b>잃어버린 생명력과 감정을 되살리는 에너지</b></p>
+      <p class="ty-eq" data-t=".45 .65 .8 .97"><span>=</span><img src="assets/images/brand/pulse-logo.webp" alt="PULSE" width="1317" height="256"></p>
+    </div>
+    <div class="ty ty-idio" data-p=".222 .25">
+      <p class="ty-label" data-t="0 .2 .8 .97">SETTING PRIORITIES</p>
+      <p class="ty-mono" data-t=".15 .35 .8 .97">ELECTRONIC BAND</p>
+      <strong class="ty-xl" data-fx="clip" data-fit=".9" data-t=".1 .45 .8 .97">IDIOTAPE</strong>
+      <p class="ty-note" data-t=".35 .55 .8 .97">일렉트로닉 밴드 IDIOTAPE의 <b>음악</b>을 기반으로</p>
+    </div>
+    <div class="ty ty-world" data-p=".246 .274">
+      <h2 class="ty-l" data-t="0 .3 .82 .98">MUSIC<br>BECOMES<br>A WORLD.</h2>
+      <p class="ty-note ty-n1" data-t=".2 .4 .82 .98">하나의 <b>세계관</b>을 구축하고,</p>
+      <ul class="ty-out" data-t=".3 .55 .82 .98"><li>ANIMATION</li><li>3 INTERACTIVE GAMES</li></ul>
+      <p class="ty-note ty-n2" data-t=".45 .65 .82 .98">애니메이션과 세 가지 인터랙티브 게임으로 확장한<br><b>게임 유니버스 프로젝트</b></p>
+      <p class="ty-mono ty-games" data-t=".55 .72 .82 .98">LOOP NIGHT · NEVER CITY · LIVE WIRE RACER</p>
+    </div>
+  </section>
+
+  <section class="ov" id="ov-anim" aria-label="애니메이션">
+    <div class="osd" id="osd" aria-hidden="true">▶ PLAY</div>
+    <div class="vctl" id="vctl">
+      <button class="ib" id="vPlay" type="button" aria-pressed="true" aria-label="재생 / 일시정지">
+        <svg class="on" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+        <svg class="off" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>
+      </button>
+      <div class="seek hit" id="vSeek" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+      <button class="ib" id="vSnd" type="button" aria-pressed="false" aria-label="영상 소리">
+        <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+        <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+      </button>
+      <button class="ib" id="vFull" type="button" aria-label="전체 화면">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <section class="ov" id="ov-games" aria-label="게임">
+    <div class="gt" id="gt"><b></b><small></small></div>
+  </section>
+
+  <section class="ov" id="ov-play" aria-label="게임 실행">
+    <button class="btn back" id="back" type="button" aria-label="게임 표지로 돌아가기">←</button>
+    <div class="flash" id="fx1"></div>
+  </section>
+
+  <footer class="tl"><ol id="tl"></ol></footer>
+</div>
+
+<div class="flash-white" id="flashw"></div>
+<div class="play" id="play" hidden>
+  <iframe id="frame" title="게임" allow="autoplay; fullscreen; gamepad" tabindex="0"></iframe>
+  <button class="btn" id="exit" type="button">EXIT</button>
+</div>
+
+<div class="loader" id="load" aria-hidden="true"><div class="in"><span class="word">PULSE</span><div class="meter"><i id="loadBar"></i></div><span id="loadPct">LOADING 0%</span></div></div>
+
+<!-- 영상은 VHS 장면에 가까워질 때 불러온다 (js/scenes/vhs.js) -->
+<video class="film" id="vid" playsinline preload="none" muted></video>
+</body>
+</html>

@@ -1,0 +1,20 @@
+/* Layout: 기준 1920×1080(16:9). 캔버스 크기는 config.js의 fit()이 창에 맞춰 정한다(논리 1px = 기기 정수 px). 남는 여백은 게임 바탕과 같은 색 */
+
+/* ================= 기본 ================= */
+:root{
+  --void:#09090c;
+  --label:#ece8de;
+  color-scheme:dark;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;margin:0;background:var(--void);color:var(--label);overflow:hidden;touch-action:none}
+body{padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}
+[hidden]:not([hidden=until-found i]){display:none!important}
+
+/* ================= 전체 화면 ================= */
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--void);overflow:hidden}
+.screen canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;user-select:none;-webkit-user-select:none}
+/* 화면 위에 덮는 효과는 없다: 주사선 · 반사 · 비네트는 픽셀을 흐리게 만들어서 쓰지 않는다.
+   게임 안의 연출(피격 순간의 화면 찢김 등)은 캔버스가 필요한 순간에만 그린다. */

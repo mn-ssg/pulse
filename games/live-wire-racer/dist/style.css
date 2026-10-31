@@ -1,0 +1,135 @@
+/* Layout: 기준 1920×1080(16:9) 무대 하나. game.js의 fit()이 창에 맞춰 통째로 줄이고 늘린다. 남는 여백은 잉크색 */
+
+@font-face { font-family: "Silkscreen"; src: url("../fonts/silkscreen-regular.woff2") format("woff2"); font-weight: 400; font-display: block; }
+@font-face { font-family: "Silkscreen"; src: url("../fonts/silkscreen-bold.woff2") format("woff2"); font-weight: 700; font-display: block; }
+@font-face { font-family: "Press Start 2P"; src: url("../fonts/press-start-2p.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "Galmuri11"; src: url("../fonts/galmuri11-bold.woff2") format("woff2"); font-weight: 400 700; font-display: block; }
+
+/* ================= 토큰: 표지 · 뒷면에서 그대로 ================= */
+:root {
+  --paper: #eeeae0;     /* 뒷면 종이 */
+  --ink: #111111;       /* 잉크 · 정보 띠 */
+  --red: #e5322d;       /* 전류 */
+  --yellow: #ffc21a;    /* 기계 신호 · 장르 태그 */
+  --grey1: #bdbdbd; --grey2: #8a8a8a; --grey3: #5d5c58; --text: #2a2a2a;
+  --pix: "Silkscreen", monospace;
+  --num: "Press Start 2P", monospace;
+  --ko: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Galmuri11", sans-serif;
+  --kopix: "Galmuri11", "Silkscreen", monospace;
+  --sans: "Inter", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; background: #0b0b0c; overflow: hidden; touch-action: none; }
+body { font: 16px var(--ko); color: var(--paper); -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; }
+[hidden] { display: none !important; }
+
+.stage { position: fixed; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 50% 50%; overflow: hidden; background: var(--ink); contain: strict; }
+.stage img { max-width: none; }
+.stage > canvas { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: block; }
+#fx { pointer-events: none; }
+.screen { position: absolute; inset: 0; }
+
+/* ================= 부품: 키 (일시정지 안내) ================= */
+.key { display: inline-grid; place-items: center; min-width: 34px; height: 30px; padding: 0 8px; border: 2px solid var(--ink); background: #fff; color: var(--ink); box-shadow: 3px 3px 0 #000; font: 700 14px var(--pix); line-height: 1; }
+
+/* 릴 배지(표지 왼쪽 위 TRACK 03): 가운데 허브가 속도에 맞춰 돈다 */
+.reel { display: block; }
+.reel-track { font: 15px var(--num); fill: #ece8de; text-anchor: middle; letter-spacing: 2px; }
+.reel-no { font: 24px var(--num); fill: #ece8de; text-anchor: middle; }
+.reel-hub { transform-origin: 105px 105px; animation: reel var(--spin, 1.6s) linear infinite; }
+@keyframes reel { to { transform: rotate(360deg); } }
+
+/* 번쩍임 · 페이드 */
+.flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: #fff; z-index: 50; }
+
+/* 불러오기: 릴이 돌고 가는 빨간 선이 찬다(글꼴이 오기 전이라 글자는 쓰지 않는다) */
+.loading { position: absolute; inset: 0; z-index: 60; display: grid; place-content: center; justify-items: center; gap: 34px; background: var(--ink); transition: opacity .45s; }
+.loading.done { opacity: 0; }
+.loading .reel { width: 132px; height: 132px; }
+.loading .reel-hub { animation-duration: .9s; }
+.l-line { width: 420px; height: 3px; background: #2a2a2a; }
+.l-fill { height: 100%; background: var(--red); transform-origin: 0 50%; transform: scaleX(0); transition: transform .2s; }
+
+/* ================= 위쪽 띠 HUD ================= */
+/* 발표 자료 머리말(● 05 GAME … 18 / 29)을 게임 위로 옮긴 것. 화면 위 64px 검은 띠 하나에 모은다 */
+.hud { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+.hud.in .band { animation: band-in .5s cubic-bezier(.2,.9,.2,1) both; }
+/* 끝날 때: 띠가 위로 걷힌다 */
+.hud.out .band { transform: translateY(-110%); transition: transform .55s cubic-bezier(.6,0,.9,.4); }
+.hud.out .chain, .hud.out .tick-strip { opacity: 0; transition: opacity .3s; }
+@keyframes band-in { from { transform: translateY(-100%); } }
+.band { position: absolute; left: 0; right: 0; top: 0; height: 64px; display: grid; grid-template-columns: 540px 1fr 600px; align-items: center; background: rgba(17,17,17,.94); border-bottom: 2px solid #000; box-shadow: 0 6px 0 rgba(0,0,0,.18); }
+.band-l { display: flex; align-items: center; gap: 18px; padding-left: 18px; height: 100%; }
+.hud-reel { width: 50px; height: 50px; }
+.hud-reel .reel { width: 50px; height: 50px; }
+.hud-reel .reel-track, .hud-reel .reel-no { display: none; }
+.band-id { display: flex; align-items: center; gap: 10px; color: #fff; }
+.band-id .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--red); }
+.band-id b { font: 14px var(--num); }
+.band-title { font: 700 18px var(--pix); letter-spacing: .02em; }
+.band-sec { display: flex; flex-direction: column; gap: 3px; padding-left: 16px; border-left: 1px solid #3a3a3a; }
+.band-sec b { font: 700 12px var(--pix); color: var(--grey2); letter-spacing: .06em; }
+.band-sec i { font: 700 15px var(--ko); font-style: normal; color: #fff; }
+
+/* 노선도: 게이트 24개가 역처럼. 켜짐 = 빨간 점, 놓침 = 회색 ✕, 다음 = 노란 테두리 */
+.route { position: relative; height: 100%; margin: 0 26px; }
+.route-line { position: absolute; left: 0; right: 0; top: 30px; height: 3px; background: #4a4946; }
+.route-fill { height: 100%; background: var(--red); transform-origin: 0 50%; transform: scaleX(0); }
+.route-stops { position: absolute; inset: 0; }
+.stop { position: absolute; top: 25px; width: 13px; height: 13px; margin-left: -6.5px; border-radius: 50%; background: #1d1d1d; border: 2px solid #77756f; }
+.stop.on { background: var(--red); border-color: #ff8a6a; box-shadow: 0 0 10px rgba(229,50,45,.85); }
+.stop.miss { background: #1d1d1d; border-color: #4f4e4a; }
+.stop.miss::before, .stop.miss::after { content: ""; position: absolute; left: 50%; top: 50%; width: 11px; height: 2px; background: #77756f; transform: translate(-50%,-50%) rotate(45deg); }
+.stop.miss::after { transform: translate(-50%,-50%) rotate(-45deg); }
+.stop.next { border-color: var(--yellow); animation: blink .5s steps(2) infinite; }
+@keyframes blink { 50% { border-color: #77756f; } }
+.tick { position: absolute; top: 42px; transform: translateX(-50%); font: 8px var(--num); color: var(--grey2); }
+.tick::before { content: ""; position: absolute; left: 50%; top: -14px; width: 1px; height: 8px; background: #77756f; }
+.tick-end { color: var(--yellow); }
+.route-me { position: absolute; top: 9px; width: 0; height: 0; margin-left: -8px; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 11px solid var(--yellow); filter: drop-shadow(0 2px 0 #000); }
+
+.band-r { display: flex; align-items: center; justify-content: flex-end; gap: 26px; padding-right: 22px; height: 100%; }
+.stat { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.stat small { font: 700 11px var(--pix); color: var(--grey2); letter-spacing: .08em; }
+.stat b { font: 15px var(--num); color: #fff; font-weight: 400; }
+.stat em { font-style: normal; color: var(--grey2); font-size: 11px; }
+.stat:first-child b { color: #ff6d5e; }
+
+/* 퓨즈: 노란 도자기 몸통 + 검은 마개. 나가면 회색으로 갈라진다 */
+.fuses { display: flex; gap: 6px; padding-left: 12px; border-left: 1px solid #3a3a3a; }
+.fuse { position: relative; width: 14px; height: 30px; background: var(--yellow); border: 2px solid #000; border-radius: 3px; box-shadow: inset 0 5px 0 #222, inset 0 -5px 0 #222; }
+.fuse.blown { background: #5d5c58; box-shadow: inset 0 5px 0 #222, inset 0 -5px 0 #222; animation: blown .4s steps(3); }
+.fuse.blown::after { content: ""; position: absolute; left: 1px; right: 1px; top: 12px; height: 3px; background: #111; transform: skewY(-28deg); }
+@keyframes blown { 0%, 66% { background: #fff; } }
+
+.chain { position: absolute; top: 72px; right: 462px; font: 700 14px var(--pix); color: var(--ink); background: var(--yellow); border: 3px solid var(--ink); box-shadow: 3px 3px 0 #000; padding: 4px 9px 3px; }
+.chain:empty { display: none; }
+
+/* 알림 띠: 위쪽 띠 아래로 내려오는 얇은 한 줄(28px). 구간 · 다가오는 사건만. 짧게 머물고 다시 올라간다 */
+.tick-strip { position: absolute; top: 64px; left: 50%; display: flex; align-items: center; gap: 14px; height: 30px; padding: 0 16px 0 12px; background: var(--ink); border: 2px solid #000; border-top: 0; box-shadow: 0 4px 0 rgba(0,0,0,.18); transform: translate(-50%, -110%); opacity: 0; z-index: -1; transition: transform .28s cubic-bezier(.2,.9,.2,1), opacity .2s; }
+.tick-strip.on { transform: translate(-50%, 0); opacity: 1; }
+.tick-strip b { font: 700 14px var(--pix); color: var(--ink); background: var(--yellow); padding: 3px 8px 2px; letter-spacing: .04em; }
+.tick-strip.warn b { animation: tick-blink .3s steps(2) 6; }
+.tick-strip span { font: 700 15px var(--ko); color: #fff; }
+@keyframes tick-blink { 50% { background: var(--red); color: #fff; } }
+/* 흔들림: 큰 충격 때 띠가 잠깐 떨린다(update.js가 --jx · --jy를 준다) */
+.band { translate: var(--jx, 0px) var(--jy, 0px); }
+
+/* ================= 타이틀: 게임 화면 위에 레터링과 START만 ================= */
+/* 배경은 그림이 아니라 실제 출발선(3D 세계)이다. 표지의 레터링을 하늘 자리에 크게, 그 아래 START 하나.
+   들어올 때: 세계가 먼저 보이고 → 레터링이 LED처럼 왼쪽부터 켜지고 → START가 켜져 박자에 숨 쉰다(캔버스가 그린다) */
+.title { z-index: 20; overflow: hidden; background: transparent; pointer-events: none; }
+.t-title { position: absolute; left: 398px; top: 96px; width: 1060px; height: 456px; filter: drop-shadow(0 10px 0 rgba(0,0,0,.18)); }
+.t-start { position: absolute; left: 50%; top: 600px; transform: translateX(-50%); }
+
+/* ================= 엔딩: 마지막 장면 위에, 타이틀과 같은 자리 · 같은 글자 ================= */
+.ending { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 20; pointer-events: none; }
+
+
+/* ================= 일시정지 ================= */
+.pause { z-index: 40; display: grid; place-items: center; background: rgba(17,17,17,.72); }
+.pause-card { display: grid; justify-items: center; gap: 22px; padding: 34px 48px; background: var(--ink); border: 3px solid #fff; box-shadow: 6px 6px 0 var(--red); }
+.pause-card b { font: 700 56px var(--pix); color: #fff; letter-spacing: .04em; }
+.pause-card p { margin: 0; display: flex; gap: 10px; align-items: center; font: 700 17px var(--ko); }
+.pause-card .key { margin-left: 12px; }

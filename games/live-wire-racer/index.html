@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <title>LIVE WIRE RACER</title>
+  <meta name="description" content="TRACK 03 「Right Answer to the Wrong Question」 — IDIOTAPE GAME SYSTEM">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Inter:wght@700;800&display=swap">
+  <link rel="stylesheet" href="dist/style.css">
+</head>
+<body>
+
+<main id="stage" class="stage">
+  <canvas id="gl" aria-label="LIVE WIRE RACER 게임 화면"></canvas>
+  <canvas id="fx" aria-hidden="true"></canvas>
+
+  <!-- 위쪽 띠 HUD: 발표 자료 머리말과 같은 문법(● 번호 · 제목 · 쪽수) -->
+  <div id="hud" class="hud" hidden>
+    <div class="band">
+      <div class="band-l">
+        <span id="hReel" class="hud-reel"></span>
+        <div class="band-id"><span class="dot"></span><b>03</b><span class="band-title">LIVE WIRE RACER</span></div>
+        <div class="band-sec"><b id="hSecNo">SECTOR 01</b><i id="hSecName">고가도로</i></div>
+      </div>
+      <div class="route">
+        <div class="route-line"><div id="hFill" class="route-fill"></div></div>
+        <div id="hStops" class="route-stops"></div>
+        <div id="hMe" class="route-me"></div>
+      </div>
+      <div class="band-r">
+        <div class="stat"><small>GRID</small><b><span id="hGrid">00</span><em>/<span id="hTotal">24</span></em></b></div>
+        <div class="stat"><small>TIME</small><b id="hTime">00:00.00</b></div>
+        <div class="stat"><small>SCORE</small><b id="hScore">0000000</b></div>
+        <div id="hFuses" class="fuses" title="퓨즈"><i class="fuse"></i><i class="fuse"></i><i class="fuse"></i></div>
+      </div>
+    </div>
+    <div id="hChain" class="chain"></div>
+    <!-- 얇은 알림 띠: 구간 · 다가오는 사건을 띠 아래 한 줄로(가운데 시야는 비워 둔다) -->
+    <div id="hTick" class="tick-strip"><b id="hTickEn"></b><span id="hTickKo"></span></div>
+  </div>
+
+  <!-- 타이틀: 실제 출발선(게임 화면 그대로) 위에 6주차 표지의 레터링과 START만. 누르면 둘이 걷히고 그 자리에서 출발한다 -->
+  <section id="title" class="screen title" hidden>
+    <canvas id="tTitle" class="t-title" aria-label="LIVE WIRE RACER"></canvas>
+    <canvas id="tStart" class="t-start" aria-label="START"></canvas>
+  </section>
+
+  <!-- 엔딩: 따로 된 결과 화면이 없다. 멈춰 선 마지막 장면 위, 타이틀과 같은 자리에 FINISH · 한 줄 기록 · RESTART만 -->
+  <canvas id="eEnd" class="ending" hidden aria-label="FINISH"></canvas>
+
+  <section id="pause" class="screen pause" hidden>
+    <div class="pause-card"><b>PAUSED</b><p><span class="key">P</span> 계속 <span class="key">Q</span> 처음으로 <span class="key">M</span> 소리</p></div>
+  </section>
+
+  <div id="loading" class="loading"><span id="lReel"></span><div class="l-line"><div id="lFill" class="l-fill"></div></div></div>
+  <div id="flash" class="flash"></div>
+</main>
+
+<script src="vendor/three.min.js"></script>
+<script src="dist/game.js"></script>
+</body>
+</html>
