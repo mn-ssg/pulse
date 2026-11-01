@@ -214,7 +214,7 @@ export function updateVideoState(dt){
 export function initVideoControls(noteGesture){
   vid.addEventListener('ended', () => { V.ended = true; V.endTimer = 1.4; });
   $('#vPlay').addEventListener('click', () => { noteGesture(); togglePlay(); });
-  $('#vSnd').addEventListener('click', () => { noteGesture(); vid.muted = !vid.muted; V.forceMute = vid.muted; if (vid.paused && !vid.muted) { V.userPaused = false; playVideo(); } });
+  $('#vSnd').addEventListener('click', () => { noteGesture(); vid.muted = !vid.muted; V.forceMute = vid.muted; if (!vid.muted && vid.volume === 0) vid.volume = .8; if (vid.paused && !vid.muted) { V.userPaused = false; playVideo(); } });
   $('#vFull').addEventListener('click', () => {
     noteGesture(); const f = vid.requestFullscreen || vid.webkitRequestFullscreen;
     if (f) { vid.controls = true; const r = f.call(vid); if (r && r.catch) r.catch(() => {}); } else if (vid.webkitEnterFullscreen) vid.webkitEnterFullscreen();
@@ -231,4 +231,23 @@ export function initVideoControls(noteGesture){
     if (e.key === 'ArrowLeft') vid.currentTime = Math.max(0, vid.currentTime - 5);
   });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'visible' && !vid.paused) vid.pause(); });
+  // 음량: LED 미터를 누르거나 끌어서 정한다. 0이면 음소거, 올리면 소리가 켜진다. 이 브라우저에서만 기억한다
+  const vol = $('#vVol');
+  try { const s = parseFloat(localStorage.getItem('pulse.vol')); vid.volume = s >= 0 && s <= 1 ? s : .8; } catch (e) { vid.volume = .8; }
+  { const t = vid.volume; vid.volume = t === .5 ? .4 : .5; if (vid.volume === t) vol.classList.add('na'); vid.volume = t; }   // iOS는 음량을 바꿀 수 없다
+  const setVol = v => {
+    v = Math.round(clamp(v)*20)/20; vid.volume = v; vid.muted = v === 0; V.forceMute = vid.muted;
+    if (v > 0 && vid.paused && !V.ended) { V.userPaused = false; playVideo(); }
+    try { localStorage.setItem('pulse.vol', String(v)); } catch (e) {}
+  };
+  let volDrag = false;
+  const volAt = e => { const r = vol.getBoundingClientRect(); setVol((e.clientX - r.left - 2)/(r.width - 4)); };
+  vol.addEventListener('pointerdown', e => { noteGesture(); volDrag = true; vol.setPointerCapture(e.pointerId); volAt(e); });
+  vol.addEventListener('pointermove', e => { if (volDrag) volAt(e); });
+  vol.addEventListener('pointerup', () => volDrag = false);
+  vol.addEventListener('keydown', e => {
+    const cur = vid.muted ? 0 : vid.volume;
+    if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); noteGesture(); setVol(cur + .1); }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); noteGesture(); setVol(cur - .1); }
+  });
 }

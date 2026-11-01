@@ -84,11 +84,14 @@
         <svg class="on" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
         <svg class="off" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>
       </button>
-      <div class="seek hit" id="vSeek" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i></i></div>
+      <span class="vtime" id="vTime">00:00</span>
+      <div class="seek hit" id="vSeek" role="slider" tabindex="0" aria-label="재생 위치" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><canvas></canvas></div>
+      <span class="vtime vdur" id="vDur">00:00</span>
       <button class="ib" id="vSnd" type="button" aria-pressed="false" aria-label="영상 소리">
         <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
         <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
       </button>
+      <div class="vol hit" id="vVol" role="slider" tabindex="0" aria-label="음량" aria-valuemin="0" aria-valuemax="100" aria-valuenow="80"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       <button class="ib" id="vFull" type="button" aria-label="전체 화면">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
       </button>

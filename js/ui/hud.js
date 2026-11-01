@@ -2,7 +2,7 @@
 import { V3 } from '../core/three.js';
 import { toScreen } from '../core/stage.js';
 import { GAMES, STEPS, STEP_C, RANGES, PH } from '../core/config.js';
-import { S, W, V, scrollToP } from '../core/state.js';
+import { S, W, V, B, scrollToP } from '../core/state.js';
 import { $, clamp, seg, ss } from '../core/utils.js';
 import { ov, showOv } from './overlay.js';
 import { vhs, vid } from '../scenes/vhs.js';
@@ -20,7 +20,8 @@ export function buildHud(){
     btn.addEventListener('click', () => { if (i < 5 && S.mode === 'scroll') scrollToP(RANGES[i][0] + (i === 4 ? .06 : .025)); });
     return { bar:li.querySelector('i'), btn, f:-1, dis:null };
   });
-  Object.assign(el, { intro:ov('ov-intro'), anim:ov('ov-anim'), games:ov('ov-games'), osd:$('#osd'), vctl:$('#vctl'), seekBar:$('#vSeek i'), seek:$('#vSeek'),
+  Object.assign(el, { intro:ov('ov-intro'), anim:ov('ov-anim'), games:ov('ov-games'), osd:$('#osd'), vctl:$('#vctl'), seekCv:$('#vSeek canvas'), seek:$('#vSeek'),
+    vTime:$('#vTime'), vDur:$('#vDur'), vol:$('#vVol'), volSeg:[...document.querySelectorAll('#vVol i')],
     vPlay:$('#vPlay'), vSnd:$('#vSnd'), gt:$('#gt'), gtName:$('#gt b'), gtInfo:$('#gt small') });
 }
 
@@ -35,6 +36,33 @@ function updateTimeline(){
     const dis = i >= 5 || !sc;
     if (dis !== s.dis) { s.dis = dis; s.btn.disabled = dis; }
   });
+}
+
+/* 재생바: 회색 길 위로 청록 전류가 차오르고, 머리에서 심전도가 박동(B.env)에 맞춰 뛴다. 멈추면 회색 평선 */
+const fmt = s => { s = Math.max(0, Math.floor(s || 0)); return String(Math.floor(s/60)).padStart(2, '0') + ':' + String(s%60).padStart(2, '0'); };
+const ECG = [[-30,0],[-22,0],[-20,-.12],[-18,0],[-14,0],[-12,.2],[-10,-1],[-8,.45],[-6,0],[-3,-.14],[0,0]];
+function drawSeek(k, live){
+  const cv = el.seekCv, r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+  const w = Math.round(r.width*d), h = Math.round(r.height*d);
+  if (!w || !h) return;
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const x = cv.getContext('2d'), y0 = h/2, hx = Math.max(2*d, k*w), amp = live ? (5 + B.env*9)*d : 0;
+  x.clearRect(0, 0, w, h); x.lineCap = 'round'; x.lineJoin = 'round';
+  x.strokeStyle = '#2f2f36'; x.lineWidth = 2*d; x.setLineDash([2*d, 3*d]);                   // 아직 재생하지 않은 길: 테이프처럼 점선
+  x.beginPath(); x.moveTo(hx, y0); x.lineTo(w, y0); x.stroke(); x.setLineDash([]);
+  const col = live ? '#5ff3ff' : '#8a8992';
+  x.strokeStyle = col; x.lineWidth = 2*d; x.shadowColor = live ? 'rgba(95,243,255,.85)' : 'transparent'; x.shadowBlur = live ? 8*d : 0;
+  x.beginPath(); x.moveTo(0, y0);
+  for (const [px, py] of ECG) { const xx = hx + px*d; if (xx > 0) x.lineTo(xx, y0 + py*amp); }
+  x.stroke();
+  x.fillStyle = live ? '#eaffff' : '#8a8992'; x.beginPath(); x.arc(hx, y0, (live ? 2.6 + B.env*1.2 : 2.4)*d, 0, Math.PI*2); x.fill();
+  x.shadowBlur = 0;
+}
+/* 음량 미터: 정한 음량까지 켜지고, 재생 중엔 그 안에서 박동에 맞춰 칸이 오르내린다. 음소거면 모두 회색 */
+function drawVol(live){
+  const n = el.volSeg.length, lv = vid.muted ? 0 : vid.volume, top = lv*n, show = live ? top*(.62 + .38*B.env) : top;
+  el.volSeg.forEach((s, i) => { const on = i < Math.round(top); s.classList.toggle('on', on); s.style.opacity = on && i >= Math.ceil(show) ? .38 : 1; });
+  const v = Math.round(lv*100); if (String(v) !== el.vol.getAttribute('aria-valuenow')) el.vol.setAttribute('aria-valuenow', v);
 }
 
 export function updateHud(){
@@ -55,7 +83,12 @@ export function updateHud(){
     const vx = Math.max(16, tl.x), vw = Math.min(innerWidth - 16, br.x) - vx, vy = Math.min(br.y + 8, innerHeight - 60);   // 화면을 채워도 조작은 화면 안에
     el.vctl.style.transform = `translate(${Math.round(vx)}px, ${Math.round(vy)}px)`; el.vctl.style.width = Math.round(Math.max(200, vw)) + 'px';
     const k = vid.duration ? vid.currentTime/vid.duration : 0;
-    el.seekBar.style.width = (k*100).toFixed(2) + '%'; el.seek.setAttribute('aria-valuenow', Math.round(k*100));
+    const live = !vid.paused && !V.ended;
+    drawSeek(k, live); el.vctl.classList.toggle('paused', !live);
+    const tt = fmt(vid.currentTime), dd = fmt(vid.duration);
+    if (tt !== el.vTime.textContent) { el.vTime.textContent = tt; el.seek.setAttribute('aria-valuenow', Math.round(k*100)); el.seek.setAttribute('aria-valuetext', tt); }
+    if (dd !== el.vDur.textContent) el.vDur.textContent = dd;
+    drawVol(live);
     el.vPlay.setAttribute('aria-pressed', String(!vid.paused)); el.vSnd.setAttribute('aria-pressed', String(!vid.muted));
     el.vSnd.classList.toggle('nudge', vid.muted && !vid.paused && Math.floor(S.time*1.6) % 2 === 0);
   }
