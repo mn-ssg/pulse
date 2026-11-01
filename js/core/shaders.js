@@ -90,3 +90,47 @@ void main(){ float x = vUv.x; if (x > uReveal) discard;
   float head = smoothstep(.06, .0, uReveal - x)*2.2;
   float a = (.35 + .65*rim)*(.55 + .45*vF)*uOpacity*(1. + uBeat*.5);
   gl_FragColor = vec4(col*(1.2 + head) + vec3(head*.6), a); }`;
+
+/* 02 월드 도시: 꺼진 도시(city-still) → 불 켜진 도시(city-lit). 고가도로에 전류가 들어온 자리부터 번지고(도로를 따라 먼저 → 양옆 건물),
+   번지는 가장자리엔 청록 전류 띠가 깜빡인다. 창문 · 간판은 칸마다 조금씩 늦게 툭툭 켜진다 */
+export const CITY_FS = `uniform sampler2D map, mapLit; uniform vec3 uRoad[12]; uniform vec2 uSeed, uSeedRoad;
+uniform float uOpacity,uBright,uSat,uLitBright,uLitSat,uSpread,uBand,uTime,uFlash,uPulse,uShadeAmt; uniform vec4 uShade;
+varying vec2 vUv;
+float h21(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }
+float vnoise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3. - 2.*f);
+  return mix(mix(h21(i), h21(i + vec2(1.,0.)), f.x), mix(h21(i + vec2(0.,1.)), h21(i + vec2(1.,1.)), f.x), f.y); }
+float lum(vec3 c){ return dot(c, vec3(.299,.587,.114)); }
+void main(){
+  vec3 st = texture2D(map, vUv).rgb, li = texture2D(mapLit, vUv).rgb;
+  /* 도로 곡선까지의 거리(가로를 그림 비율로 늘린 좌표)와 곡선 위 위치 s(0 = 화면 아래로 들어오는 곳) */
+  vec2 p = vec2(vUv.x*1.7817, vUv.y);
+  float dmin = 1e3, s = 0.;
+  for (int i = 0; i < 11; i++) {
+    vec2 a = uRoad[i].xy, ab = uRoad[i+1].xy - a;
+    float h = clamp(dot(p - a, ab)/dot(ab, ab), 0., 1.), d = length(p - a - ab*h);
+    if (d < dmin) { dmin = d; s = mix(uRoad[i].z, uRoad[i+1].z, h); }
+  }
+  /* 바닥 전류선의 머리 뒤(uSeed)에서 먼저 번져 고가도로에 닿고(uSeedRoad: 닿는 곳의 s · 거리), 그다음 도로를 따라 달린 뒤 양옆 건물로 */
+  float tRoad = uSeedRoad.y*.55 + abs(s - uSeedRoad.x)*.6 + dmin*.95, tSeed = length(p - uSeed)*.55;
+  float t = min(tSeed, tRoad) + (vnoise(p*7.) - .5)*.2 + (vnoise(p*26.) - .5)*.06;
+  float area = 1. - smoothstep(uSpread - .05, uSpread, t);
+  /* 광원(창문 · 간판 · 가로등 · 전류): 불 켜진 그림에서만 밝은 곳 */
+  float lm = smoothstep(.14, .32, lum(li) - lum(st)*.55) * smoothstep(.45, .7, max(li.r, max(li.g, li.b)));
+  float cyan = smoothstep(.02, .14, li.b - li.r) * smoothstep(.0, .1, li.g - li.r);   // 도로 전류는 번짐과 함께, 나머지는 칸마다 늦게
+  float pop = smoothstep(0., .015, uSpread - t - .05 - h21(floor(vUv*vec2(56., 31.)))*.24);
+  float on = mix(pop, 1., cyan);
+  vec3 offC = vec3(.15,.16,.19)*(.55 + lum(st)*.9);
+  vec3 lc = mix(li, offC, lm*(1. - on)) + li*lm*on*uPulse;
+  lc = mix(vec3(lum(lc)), lc, uLitSat) * uLitBright * (1. + uFlash*.35);
+  vec3 sc = mix(vec3(lum(st)), st, uSat) * uBright;
+  vec3 c = mix(sc, lc, area);
+  /* 번지는 가장자리: 얇은 청록 띠가 깜빡인다 */
+  float bx = (t - uSpread + .01)/(fwidth(t)*2.2 + .0006);
+  float band = exp(-bx*bx) + .22*exp(-bx*bx*.06);   // 화면에서 몇 픽셀 굵기의 선 + 옅은 번짐
+  float fl = (.7 + .3*sin(uTime*43. + t*140.)) * (h21(vec2(floor(uTime*20.), floor(t*36.))) > .18 ? 1. : .3);
+  c += vec3(.373,.953,1.) * band * fl * uBand * .85;
+  /* 큰 글자 뒤만 살짝 어둡게 (화면 좌표 타원) */
+  if (uShadeAmt > 0.) { vec2 q = (gl_FragCoord.xy - uShade.xy)/uShade.zw; c *= 1. - uShadeAmt*exp(-dot(q, q)*1.6); }
+  if (uOpacity < .003) discard;
+  gl_FragColor = vec4(c, uOpacity);
+}`;

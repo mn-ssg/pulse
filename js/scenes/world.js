@@ -1,14 +1,17 @@
 /* 02 카메라 이동 · VIDEO TAPE · 월드 · 전류선 · LED 먼지 */
 import { THREE, V3, Q } from '../core/three.js';
-import { scene, plane, slab, imgMat, litMat, cropUV, glowMesh, vis, LITE } from '../core/stage.js';
-import { CURRENT_VS, CURRENT_FS } from '../core/shaders.js';
+import { scene, camera, plane, slab, litMat, cropUV, glowMesh, vis, LITE, renderer } from '../core/stage.js';
+import { VS, CURRENT_VS, CURRENT_FS, CITY_FS } from '../core/shaders.js';
 import { T } from '../core/assets.js';
 import { META, STAGE_Z, CAM_D, TAPE_W } from '../core/config.js';
 import { S, L, W, B, V, mouse, cam } from '../core/state.js';
 import { clamp, seg, lerp, ss, eio, bump, RM } from '../core/utils.js';
 import { tapeFrames, insertEase, vhsCamera } from './vhs.js';
 
-export const world = { tape:null, tapeParts:null, reels:[], panelF:null, panelP:null, cityPlane:null, currentLine:null, leds:null };
+export const world = { tape:null, tapeParts:null, reels:[], cityPlane:null, currentLine:null, leds:null };
+
+/* 고가도로 가운데 선 (city-still 픽셀 좌표, 화면 아래로 들어오는 곳 → 왼쪽 뒤로 휘어 들어가는 끝) */
+const CITY_ROAD = [[905,898],[890,780],[872,690],[850,610],[820,545],[780,490],[725,440],[660,395],[590,360],[520,330],[460,316],[410,318]];
 
 /* ---------- build ---------- */
 export function buildTape(){
@@ -33,12 +36,18 @@ export function buildTape(){
 
 export function buildWorld(){
   const worldG = new THREE.Group(); scene.add(worldG);
-  const city = world.cityPlane = plane(1, 1, imgMat(T.world_city, { sat:0, bright:.5, opacity:0, depthWrite:false })); city.position.set(0, 1.5, -40); worldG.add(city);
-  const fA = META.world_future[0]/META.world_future[1], pA = META.world_past[0]/META.world_past[1];
-  const pf = world.panelF = plane(3.6*fA, 3.6, imgMat(T.world_future, { sat:0, opacity:0, radius:.02, aspect:fA }));
-  pf.position.set(-2.9, .35, -3.6); pf.rotation.y = .55; worldG.add(pf);
-  const pp = world.panelP = plane(3.9*pA, 3.9, imgMat(T.world_past, { sat:0, opacity:0, radius:.02, aspect:pA }));
-  pp.position.set(2.35, .45, -10.8); pp.rotation.y = -.5; worldG.add(pp);
+  // 배경 도시: 꺼진 그림과 같은 구도의 불 켜진 그림을 겹쳐, 전류가 들어온 고가도로부터 불이 번진다 ("폐허는 회색, 작동하는 것만 색")
+  const [iw, ih] = META.world_city, road = [];
+  let acc = 0;
+  CITY_ROAD.forEach(([x, y], i) => { if (i) acc += Math.hypot(x - CITY_ROAD[i - 1][0], y - CITY_ROAD[i - 1][1]); road.push(new V3(x/ih, 1 - y/ih, acc)); });
+  road.forEach(r => r.z /= acc);
+  const city = world.cityPlane = plane(1, 1, new THREE.ShaderMaterial({ vertexShader:VS, fragmentShader:CITY_FS, transparent:true, depthWrite:false,
+    uniforms:{ map:{value:T.world_city}, mapLit:{value:T.world_city_lit}, uRoad:{value:road}, uOpacity:{value:0}, uBright:{value:.4}, uSat:{value:0},
+      uLitBright:{value:1}, uLitSat:{value:1}, uSpread:{value:-1}, uBand:{value:0}, uTime:{value:0}, uFlash:{value:0}, uPulse:{value:0},
+      uSeed:{value:new THREE.Vector2(.4, .2)}, uSeedRoad:{value:new THREE.Vector2(0, .3)},
+      uShade:{value:new THREE.Vector4(0, 0, 1, 1)}, uShadeAmt:{value:0} } }));
+  city.userData.road = road;
+  city.position.set(0, 1.5, -40); worldG.add(city);
   // 바닥을 따라 무대까지 가는 전류선
   const pts = []; for (let k = 0; k <= 40; k++) { const z = lerp(4, STAGE_Z + .05, k/40), u = k/40; pts.push(new V3(lerp(-1.4, 0, ss(u)) + Math.sin(k*1.7)*.12*(1 - u), lerp(-.82, -.6, ss(u)) + Math.sin(k*.9)*.04*(1 - u), z)); }
   const curve = new THREE.CatmullRomCurve3(pts);
@@ -61,6 +70,7 @@ export function buildWorld(){
 export function resizeWorld(){ const v = vis(40 + 9); world.cityPlane.scale.set(v.h*1.25*1.78, v.h*1.25, 1); }
 
 /* ---------- scroll ---------- */
+const SPREAD0 = -.05;   // 번짐 시작 위치 (도로 곡선 위 s · 화면 아래 가장자리 기준으로 맞춘 값)
 const cp = new V3(), fwd = new V3(), stg = new V3(), cl = new V3(), vp = new V3(), vl = new V3(), tpos = new V3(), tq = new Q(), qWob = new Q(), eul = new THREE.Euler();
 
 /* 원본 카메라(정면 → 월드 속으로 → 무대) → 테이프 주위를 돌고, 플레이어 · 슬롯 · 모니터 안으로 (vhs.js) */
@@ -111,23 +121,26 @@ export function updateTape(P_, tr, dt){
   reels.forEach(r => r.rotation.z = -S.reelSpin);
 }
 
-/* 월드: 같은 길에서 전류선이 맥박 → 비트 → 전기 신호 → 에너지로 바뀌고, 에너지가 닿은 도시가 깨어난다 (타이포그래피와 박자를 맞춘다) */
+/* 월드: 같은 길에서 전류선이 맥박 → 비트 → 전기 신호 → 에너지로 바뀌고, 에너지가 닿은 도시가 깨어난다 (타이포그래피와 박자를 맞춘다)
+   ELECTRICITY 끝: 전류가 화면 아래 고가도로로 들어온다 → CITY: 도로를 따라 번져 화면 전체가 켜진다 → ENERGY ~ WORLD: 켜진 채 박동에 맞춰 숨 쉰다
+   → 무대: 어두워지되 색이 약하게 남는다. 모두 스크롤 위치로만 정해지므로 거꾸로 올리면 같은 순서로 꺼진다 */
+const shadeEl = { el:null, p:-1 };
 export function updateWorld(P_, cz){
-  const { panelF, panelP, cityPlane, currentLine } = world;
-  const wIn = ss(seg(P_, .06, .13)), wOut = 1 - ss(seg(P_, .29, .34));
-  panelF.visible = panelP.visible = P_ > .04 && P_ < .36;
-  if (panelF.visible) {
-    panelF.material.uniforms.uOpacity.value = wIn*wOut; panelP.material.uniforms.uOpacity.value = wIn*wOut;
-    const awake = ss(seg(P_, .165, .19));                               // CITY가 켜질 때 함께
-    panelP.material.uniforms.uSat.value = awake; panelP.material.uniforms.uBright.value = .5 + .5*awake + .3*bump(P_, .165, .2);
-    panelF.material.uniforms.uBright.value = .8;
-  }
+  const { cityPlane, currentLine } = world;
   cityPlane.visible = P_ > .06 && P_ < .57;
   if (cityPlane.visible) {
-    const u = cityPlane.material.uniforms, lit = ss(seg(P_, .165, .195));
+    const u = cityPlane.material.uniforms, stg = ss(seg(P_, .3, .37)), full = ss(seg(P_, .19, .2));
     u.uOpacity.value = ss(seg(P_, .07, .16))*(1 - ss(seg(P_, .46, .56)));
-    u.uBright.value = lerp(lerp(.4, .55, lit), .26, ss(seg(P_, .3, .37)));
-    u.uSat.value = lerp(.6*lit, .15, ss(seg(P_, .3, .37)));
+    // 세로 화면은 그림 가운데만 보이므로 번짐 끝값을 줄여 CITY 동안 같은 빠르기로 화면을 채운다
+    u.uSpread.value = lerp(SPREAD0, lerp(1.2, 2.1, clamp((camera.aspect - .45)/1.15)), ss(seg(P_, .149, .197)));
+    seedFromLine(P_, u);
+    u.uBand.value = P_ > .145 ? 1 - ss(seg(P_, .192, .2)) : 0;
+    u.uBright.value = lerp(.4, .26, stg); u.uSat.value = 0;
+    u.uLitBright.value = lerp(.9, .46, stg); u.uLitSat.value = lerp(1, .45, stg);
+    u.uFlash.value = bump(P_, .165, .2);
+    u.uPulse.value = B.env*.22*full*(1 - stg)*(W.awake && !RM ? 1 : 0);
+    u.uTime.value = S.time;
+    shade(P_, u);
   }
   currentLine.visible = P_ > .095 && P_ < .4;
   if (currentLine.visible) {
@@ -136,6 +149,37 @@ export function updateWorld(P_, cz){
     u.uOpacity.value = ss(seg(P_, .1, .13))*(1 - ss(seg(P_, .33, .4)));
     u.uPhase.value = B.phase; u.uBeat.value = B.env; u.uTime.value = S.time;
   }
+}
+/* 번짐 시작점 = 바닥 전류선 머리가 화면에서 겹쳐 보이는 도시 그림 위의 점 (ELECTRICITY 끝 위치로 고정 · 스크롤 위치로만 정해진다) */
+const sv = new V3(), sh = new V3(), sd = new V3();
+function seedFromLine(P_, u){
+  const pp = Math.min(P_, .152), czp = lerp(9, STAGE_Z + CAM_D, eio(seg(pp, .05, .30)));
+  const headZ = lerp(czp - 2.2, STAGE_Z, ss(seg(pp, .12, .285)));
+  world.currentLine.userData.curve.getPoint(clamp((4 - headZ)/(4 - STAGE_Z)), sh);
+  const cp = world.cityPlane, c = camera;
+  sd.copy(sh).sub(c.position).normalize(); const k = (cp.position.z - c.position.z)/sd.z;
+  sv.copy(c.position).addScaledVector(sd, k);
+  const iu = clamp((sv.x - cp.position.x)/cp.scale.x + .5), iv = clamp((sv.y - cp.position.y)/cp.scale.y + .5);
+  const q = u.uSeed.value.set(iu*1.7817, iv), road = cp.userData.road;
+  let dm = 1e9, sq = 0;
+  for (let i = 0; i < road.length - 1; i++) {
+    const ax = road[i].x, ay = road[i].y, bx = road[i + 1].x - ax, by = road[i + 1].y - ay;
+    const h = clamp(((q.x - ax)*bx + (q.y - ay)*by)/(bx*bx + by*by)), d = Math.hypot(q.x - ax - bx*h, q.y - ay - by*h);
+    if (d < dm) { dm = d; sq = lerp(road[i].z, road[i + 1].z, h); }
+  }
+  u.uSeedRoad.value.set(sq, dm);
+}
+/* 불 켜진 배경 위 큰 글자: 지금 보이는 단어 뒤만 살짝 어둡게 (화면 픽셀 좌표 타원) */
+const TY = [...document.querySelectorAll('.ty[data-p]')].map(el => ({ el, r:el.dataset.p.split(' ').map(Number), big:el.querySelector('.ty-xl, .ty-l') || el }));
+function shade(P_, u){
+  const lit = ss(seg(P_, .16, .2))*(1 - ss(seg(P_, .3, .34)));
+  let best = null, bw = 0;
+  for (const t of TY) { const w = bump(P_, t.r[0], t.r[1]); if (w > bw) { bw = w; best = t; } }
+  if (!best || lit <= 0) { u.uShadeAmt.value = 0; return; }
+  const r = best.big.getBoundingClientRect(), k = renderer.getPixelRatio(), H = innerHeight;
+  if (r.width < 2) { u.uShadeAmt.value = 0; return; }
+  u.uShade.value.set((r.left + r.width/2)*k, (H - r.top - r.height/2)*k, Math.max(r.width*.75, 160)*k, Math.max(r.height*1.1, 120)*k);
+  u.uShadeAmt.value = .38*lit*Math.min(1, bw*1.6);
 }
 
 /* LED 먼지: PULSE가 오면 깨어나 색이 들고 박동에 맞춰 뛴다 ("작동하는 것만 색") */

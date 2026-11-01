@@ -17,7 +17,7 @@ export const VIDEO = { src:'assets/videos/pulse-film.mp4', poster:'assets/videos
 export const IMAGES = {
   logo_idiotape:'brand/idiotape-logo.webp',
   tape_front:'tape/tape-front.webp', tape_back:'tape/tape-back.webp',
-  world_future:'world/world-future.webp', world_past:'world/world-past.webp', world_city:'world/city-still.webp',
+  world_city:'world/city-still.webp', world_city_lit:'world/city-lit.webp',
   player_front:'player/player-front.webp', player_side:'player/player-side.webp',
   console:'console/game-console.webp',
   ...Object.fromEntries(GAMES.flatMap(g => [
@@ -28,7 +28,7 @@ export const IMAGES = {
 /* 불러오는 순서: 첫 화면 → 바로 다음 장면 → 게임 (main.js) */
 export const IMAGE_GROUPS = {
   intro:['tape_front', 'tape_back'],
-  world:['world_future', 'world_past', 'world_city', 'player_front', 'player_side'],
+  world:['world_city', 'world_city_lit', 'player_front', 'player_side'],
   games:['logo_idiotape', 'console', ...GAMES.flatMap(g => [`${g.id}_front`, `${g.id}_back`, `${g.id}_chip`, `${g.id}_blur`, `logo_${g.id}`])],
 };
 export const FONTS = {
@@ -40,7 +40,7 @@ export const FONTS = {
 export const META = {
   tape_front:[1800,1188], tape_back:[1800,1195], chip:[652,872], console:[2021,975],
   console_screen:[0.2003958436417615,0.08512820512820513,0.8179119247897081,0.8153846153846154],
-  world_future:[720,1116], world_past:[1080,1920],
+  world_city:[1600,898],                                       // city-still · city-lit (같은 구도)
 };
 
 /* ---------- 무대 ---------- */

@@ -45,7 +45,7 @@ assets/
   images/
     brand/                 IDIOTAPE 로고 · PULSE 로고 (Figma PULSE_logo 원본)
     tape/                  비디오 테이프 앞 · 뒤
-    world/                 월드 패널 · 도시 배경
+    world/                 도시 배경: city-still(꺼짐) · city-lit(켜짐, 같은 구도) — 02 WORLD에서 전류가 번지며 회색 → 색
     player/                카세트 플레이어 정면 · 측면 (Figma '13 · 캐릭터와 소품', 3D 상자 면 텍스처)
     console/               게임기
     games/<게임>/          cover-front · cover-back · chip · cover-blur · logo (Figma '18 · 선택한 게임 3')
