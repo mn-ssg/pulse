@@ -32,6 +32,7 @@
 /* 2. Base ---------------------------------------------------------------- */
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;background:var(--color-bg);color:var(--color-text)}
+html{scrollbar-width:none}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none}   /* 스크롤은 그대로, 오른쪽 스크롤바만 숨긴다 */
 body{font-family:var(--font-kr);word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 [hidden]{display:none!important}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
@@ -53,7 +54,7 @@ body.locked #gl{touch-action:none}
 .bar button{font:500 12px/1 var(--font-mono);letter-spacing:.08em;color:var(--color-text-muted);padding:6px 0}
 .bar button[aria-pressed="true"]{color:var(--color-text)}
 
-.tl{position:fixed;left:0;right:0;bottom:0;padding:0 var(--space-x-end) calc(16px + var(--safe-bottom)) var(--space-x)}
+.tl{display:none;position:fixed;left:0;right:0;bottom:0;padding:0 var(--space-x-end) calc(16px + var(--safe-bottom)) var(--space-x)}   /* 하단 진행 막대: 숨김 */
 .tl ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(9,1fr);gap:3px}
 .tl li{min-width:0}
 .tl button{display:block;width:100%;padding:0}
