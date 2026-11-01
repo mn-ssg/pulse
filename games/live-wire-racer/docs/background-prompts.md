@@ -65,5 +65,4 @@ Only the sky of Image 1, with every building removed: low, heavy, dark blue-gray
 ## 파일
 
 - 게임이 불러오는 파일: `images/city-sky.webp`, `city-far.webp`, `city-far-lit.webp`, `city-near.webp`, `city-near-lit.webp`
-- 투명 PNG 원본: `images/layers/`
 - 꺼짐 → 켜짐: 게이트를 지나 철탑이 켜질 때마다 `*-lit` 그림이 블록 단위로 차례차례 켜진다. 첫 게이트에서 약 18%가 켜지고, 24개를 모두 켜면 100%가 된다 (`dist/game.js`의 `cityMat` · `cityLit`).
