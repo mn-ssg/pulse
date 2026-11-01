@@ -129,6 +129,7 @@ body.locked #gl{touch-action:none}
 .ty-idio .ty-label{left:6vw;top:15vh}
 .ty-idio .ty-mono{left:6.2vw;top:26vh}
 .ty-idio .ty-xl{left:5vw;top:33vh}
+.ty-xl-logo{line-height:0}.ty-xl-logo .ty-logo{display:block;height:.72em;width:auto;filter:drop-shadow(0 6px 30px rgba(0,0,0,.45))}   /* 글자 대신 Figma 로고 (글자 크기로 맞춘다) */
 .ty-idio .ty-note{left:6vw;bottom:16vh}
 
 .ty-world .ty-l{left:6vw;top:14vh;font:900 clamp(44px,7.4vw,128px)/.88 var(--font-display);letter-spacing:-.02em}
