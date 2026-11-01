@@ -102,7 +102,7 @@
   //   노랑 = 기계의 신호(LED 계기판 · 게이트 차선 표시 · 경고 줄무늬)
   // 부딪히면 색이 빠진다(회색 = 멈춘 미래). 따로 '피해 색'을 두지 않는다.
   const C = {
-    paper:'#eeeae0', paper2:'#e2ddd0', haze:'#d6d1c4', fog:'#e7e2d6',
+    paper:'#eeeae0', paper2:'#e2ddd0', haze:'#d6d1c4', fog:'#343a4a',   // fog: 밤 도시 아래쪽 안개(청회색)
     ink:'#111111', ink2:'#2a2a2a', ink3:'#3c3b38',
     grey1:'#bdbdbd', grey2:'#8a8a8a', grey3:'#5d5c58', concrete:'#bcb7ab',
     red:'#e5322d', redHot:'#ff6a3d', redDeep:'#a3201c',
@@ -834,7 +834,9 @@
     title: 'images/title.webp',         // 타이틀 레터링(투명)
     cockpit: 'images/cockpit.webp',     // 1인칭 핸들 · 계기판(투명)
     pylon: 'images/pylon.webp',         // 철탑
-    skyline: 'images/skyline.webp',     // 원경 도시
+    citySky: 'images/city-sky.webp',    // 원경 1: 낮게 깔린 구름(배경 수정사항)
+    cityFar: 'images/city-far.webp', cityFarLit: 'images/city-far-lit.webp',     // 원경 2: 먼 고층 빌딩(꺼짐 · 켜진 창문)
+    cityNear: 'images/city-near.webp', cityNearLit: 'images/city-near-lit.webp', // 원경 3: 가까운 빌딩(꺼짐 · 켜진 창문)
     portal: 'images/portal.webp',       // 터널 입구
     substation: 'images/substation.webp',
     car: 'images/prop0.webp', barrier: 'images/prop1.webp', barricade: 'images/prop2.webp', coil: 'images/prop3.webp',
@@ -910,7 +912,7 @@
     function asphalt() {
       const W = 1024, H = 2048, [c, x] = mk(W, H);
       const pxm = W / 17.2, ux = m => (m + 8.6) * pxm, pym = H / 24;
-      x.fillStyle = '#8f8c85'; x.fillRect(0, 0, W, H);
+      x.fillStyle = '#44474f'; x.fillRect(0, 0, W, H);
       tiled(x, W, H, 101, 'y', () => {
         // 큰 얼룩(아스팔트 결)
         for (let i = 0; i < 90; i++) {
@@ -920,9 +922,9 @@
         // 진행 방향 마른 붓 자국(표지의 도로처럼)
         for (let i = 0; i < 1400; i++) {
           const dark = R() < .62;
-          dryBrush(x, rnd(0, W), rnd(-200, H), rnd(60, 520), dark ? 2.2 : 1.6, dark ? grey(rnd(20, 60), rnd(.18, .5)) : grey(rnd(200, 240), rnd(.15, .4)));
+          dryBrush(x, rnd(0, W), rnd(-200, H), rnd(60, 520), dark ? 2.2 : 1.6, dark ? grey(rnd(14, 40), rnd(.2, .5)) : grey(rnd(135, 175), rnd(.13, .32)));
         }
-        speckle(x, W, H, 9000, grey(40, .5), grey(220, .45), 2.4);
+        speckle(x, W, H, 9000, grey(25, .5), grey(165, .35), 2.4);
         // 바퀴 자국: 차선마다 두 줄
         for (const lc of COURSE.lanes) for (const o of [-.75, .75]) {
           x.fillStyle = grey(45, .12); x.fillRect(ux(lc + o) - 14, 0, 28, H);
@@ -939,12 +941,12 @@
       });
       // 차선: 6m 칠하고 6m 비운다(한 장에 두 번). 가장자리는 실선
       const dash = (m, y0, len) => {
-        roughRect(x, ux(m) - 9, y0 * pym, 18, len * pym, 'rgba(238,234,224,.92)', 2.5);
+        roughRect(x, ux(m) - 9, y0 * pym, 18, len * pym, 'rgba(196,199,204,.6)', 2.5);
         for (let i = 0; i < 30; i++) dryBrush(x, ux(m) + rnd(-8, 8), y0 * pym + rnd(0, len * pym), rnd(10, 60), 1.5, grey(rnd(60, 120), .45));
       };
       for (const m of [-1.8, 1.8, -5.4, 5.4]) { dash(m, 1, 6); dash(m, 13, 6); }
       for (const m of [-7.05, 7.05]) {
-        roughRect(x, ux(m) - 7, 0, 14, H, 'rgba(238,234,224,.85)', 2);
+        roughRect(x, ux(m) - 7, 0, 14, H, 'rgba(188,191,197,.5)', 2);
         for (let i = 0; i < 60; i++) dryBrush(x, ux(m) + rnd(-6, 6), rnd(0, H), rnd(10, 90), 1.4, grey(rnd(70, 130), .5));
       }
       // 가드레일 밑 그늘
@@ -958,15 +960,15 @@
     /* 콘크리트 방호벽 안쪽 면: 길이 24m × 높이 1.2m. 4m마다 이음매, 한 장에 노랑 줄무늬 표지 하나 */
     function wall(tunnel = false) {
       const W = 1024, H = 256, [c, x] = mk(W, H);
-      x.fillStyle = tunnel ? '#6d6a63' : '#c3beb2'; x.fillRect(0, 0, W, H);
+      x.fillStyle = tunnel ? '#6d6a63' : '#4c5059'; x.fillRect(0, 0, W, H);
       tiled(x, W, H, tunnel ? 203 : 202, 'x', () => {
         for (let i = 0; i < 500; i++) dryBrush(x, rnd(0, W), rnd(-40, H), rnd(30, 200), 1.8, grey(rnd(40, 110), rnd(.1, .35)));
-        speckle(x, W, H, 2600, grey(50, .4), grey(235, .4), 2);
+        speckle(x, W, H, 2600, grey(30, .4), grey(160, .32), 2);
       });
       x.fillStyle = grey(30, .5); x.fillRect(0, 0, W, 10);           // 윗선(잉크)
       x.fillStyle = grey(20, .8); x.fillRect(0, H - 14, W, 14);      // 바닥 그늘
       const pm = W / 24;
-      for (let m = 0; m < 24; m += 4) { x.fillStyle = grey(25, .75); x.fillRect(m * pm, 0, 3, H); x.fillStyle = grey(240, .35); x.fillRect(m * pm + 3, 0, 2, H); }
+      for (let m = 0; m < 24; m += 4) { x.fillStyle = grey(20, .75); x.fillRect(m * pm, 0, 3, H); x.fillStyle = grey(170, .3); x.fillRect(m * pm + 3, 0, 2, H); }
       // 노랑-검정 줄무늬 표지(표지 그림의 가드레일처럼 작게)
       const sx = 10 * pm, sw = 1.6 * pm;
       x.save(); x.beginPath(); x.rect(sx, 26, sw, H - 60); x.clip();
@@ -1061,20 +1063,20 @@
     // 고가도로 아래 땅: 연한 안개 속 무너진 블록
     function ground() {
       const W = 1024, H = 1024, [c, x] = mk(W, H);
-      x.fillStyle = '#cfcabd'; x.fillRect(0, 0, W, H);
+      x.fillStyle = '#2a2f39'; x.fillRect(0, 0, W, H);
       for (let i = 0; i < 260; i++) {
-        x.fillStyle = grey(rnd(90, 160), rnd(.15, .4));
+        x.fillStyle = grey(rnd(16, 60), rnd(.15, .4));
         const w = rnd(20, 90), h = rnd(20, 90); x.fillRect(rnd(0, W), rnd(0, H), w, h);
       }
-      for (let i = 0; i < 1200; i++) dryBrush(x, rnd(0, W), rnd(0, H), rnd(20, 120), 1.2, grey(rnd(60, 140), rnd(.08, .25)), R() < .5);
+      for (let i = 0; i < 1200; i++) dryBrush(x, rnd(0, W), rnd(0, H), rnd(20, 120), 1.2, grey(rnd(70, 120), rnd(.06, .18)), R() < .5);
       return c;
     }
     // 고무 피복 전선
     function cable() {
       const [c, x] = mk(64, 256);
-      x.fillStyle = '#262626'; x.fillRect(0, 0, 64, 256);
-      for (let i = 0; i < 16; i++) { x.strokeStyle = grey(rnd(70, 110), .7); x.lineWidth = 3; x.beginPath(); x.moveTo(0, i * 16); x.lineTo(64, i * 16 + 12); x.stroke(); }
-      x.fillStyle = grey(140, .35); x.fillRect(22, 0, 6, 256);
+      x.fillStyle = '#2c2e34'; x.fillRect(0, 0, 64, 256);
+      for (let i = 0; i < 16; i++) { x.strokeStyle = grey(rnd(90, 130), .7); x.lineWidth = 3; x.beginPath(); x.moveTo(0, i * 16); x.lineTo(64, i * 16 + 12); x.stroke(); }
+      x.fillStyle = grey(210, .7); x.fillRect(21, 0, 9, 256);
       return c;
     }
     // 터널 천장 · 벽(어두운 콘크리트, 판 이음매)
@@ -1744,8 +1746,8 @@ gl_Position = projectionMatrix * mvPosition;`);
       T.ground = tex(TEX.ground(), { repeat: true });
       T.cable = tex(TEX.cable(), { repeat: true });
       T.tunnel = tex(TEX.tunnelPanel(), { repeat: true });
-      for (const k of ['pylon', 'skyline', 'portal', 'substation', 'car', 'barrier', 'barricade', 'coil', 'ind0', 'ind1', 'ind2', 'ind3', 'logo']) if (IMG[k]) T[k] = tex(IMG[k], { aniso: 4 });
-      T.skyline.wrapS = THREE.RepeatWrapping;
+      for (const k of ['pylon', 'citySky', 'cityFar', 'cityFarLit', 'cityNear', 'cityNearLit', 'portal', 'substation', 'car', 'barrier', 'barricade', 'coil', 'ind0', 'ind1', 'ind2', 'ind3', 'logo']) if (IMG[k]) T[k] = tex(IMG[k], { aniso: 4 });
+      for (const k of ['cityFar', 'cityFarLit', 'cityNear', 'cityNearLit']) T[k].wrapS = THREE.RepeatWrapping;
       M.glowRed = glowMat(C.red); M.glowHot = glowMat(C.redHot); M.glowYellow = glowMat(C.yellow); M.glowWhite = glowMat('#ffffff');
       M.steel = basic({ color: '#2a2a28' });
       M.ink = basic({ color: '#141414' });
@@ -1773,45 +1775,74 @@ gl_Position = projectionMatrix * mvPosition;`);
         const dg = new THREE.PlaneGeometry(L, 3.4, Math.round(L / 8), 1);
         dg.rotateY(side < 0 ? -Math.PI / 2 : Math.PI / 2);
         dg.translate(side * (COURSE.roadHalf + .4), -1.6, -(L / 2 - behind - 20));
-        add(new THREE.Mesh(dg, basic({ color: '#4a4844', side: THREE.DoubleSide })));
+        add(new THREE.Mesh(dg, basic({ color: '#2b2f37', side: THREE.DoubleSide })));
       }
       const gg = new THREE.PlaneGeometry(3200, 2200, 16, 22);
       gg.rotateX(-Math.PI / 2); gg.translate(0, -34, -900);
       T.ground.repeat.set(10, 7);
-      groundM = add(new THREE.Mesh(gg, basic({ map: T.ground })));
+      groundM = add(new THREE.Mesh(gg, basic({ map: T.ground, depthWrite: false })));
+      groundM.renderOrder = -13;   // 하늘 다음, 빌딩 겹 아래: 방호벽 너머는 빌딩 아랫부분이 채운다
     }
 
-    /* ---------- 원경 도시: 두 겹. 굽이를 돌면 옆으로 미끄러진다. 켠 철탑만큼 불빛이 켜진다 ---------- */
+    /* ---------- 원경 도시: 하늘 · 먼 빌딩 · 가까운 빌딩 세 겹(피그마 '배경 수정사항' 그림). 굽이를 돌면 가까운 겹일수록 더 옆으로 미끄러진다
+       빌딩 겹은 '꺼진 그림' 위에 '켜진 창문 · 간판 그림'을 덧그린다. 철탑을 켤 때마다 블록 단위로 차례차례 불이 들어온다 ---------- */
     const sky = [];
-    let cityLights, cityLightData = [];
+    let farLayer, cityLights, cityLightData = [], cityLit = 0;
+    const CITY_U = { uLit: { value: 0 }, uTime: { value: 0 } };
+    function cityMat(map, lit, cells, seed) {
+      const m = new THREE.MeshBasicMaterial({ map, transparent: true, fog: false, depthWrite: false });
+      if (lit) {
+        const u = { tLit: { value: lit }, uCells: { value: new THREE.Vector2(cells[0], cells[1]) }, uSeed: { value: seed } };
+        m.onBeforeCompile = sh => {
+          Object.assign(sh.uniforms, u, CITY_U);
+          sh.fragmentShader = sh.fragmentShader
+            .replace('#include <common>', '#include <common>\nuniform sampler2D tLit; uniform vec2 uCells; uniform float uSeed, uLit, uTime;')
+            .replace('#include <map_fragment>', `#include <map_fragment>
+  {
+    vec4 lt = texture2D(tLit, vMapUv);
+    vec2 cell = floor(vec2(fract(vMapUv.x) * uCells.x, vMapUv.y * uCells.y));
+    float ord = .02 + .96 * fract(sin(dot(cell + uSeed, vec2(12.9898, 78.233))) * 43758.5453);
+    float on = smoothstep(ord - .05, ord, uLit);
+    float fl = .88 + .12 * sin(uTime * (2.0 + ord * 6.0) + ord * 40.0);
+    diffuseColor.rgb = mix(diffuseColor.rgb, min(lt.rgb * 1.3, vec3(1.0)), clamp(lt.a * on * fl * 1.25, 0.0, 1.0));
+    diffuseColor.a = max(diffuseColor.a, lt.a * on);
+  }`);
+        };
+      }
+      return basic(m);
+    }
     function buildSkyline() {
+      const ar = k => IMG[k].width / IMG[k].height;
       const layers = [
-        { z: -1180, h: 400, w: 3300, rep: 3, off: 0, op: .55, col: '#cfcabd', y: -60 },
-        { z: -720, h: 230, w: 1500, rep: 2, off: .37, op: .8, col: '#9f9a90', y: -40 }
+        { k: 'citySky', z: -2300, h: 4600, w: 11000, y: -700, sh: .04 },
+        { k: 'cityFar', lit: 'cityFarLit', z: -1180, h: 1200, y: -150, sh: .12, cells: [40, 9], seed: 3.1 },
+        { k: 'cityNear', lit: 'cityNearLit', z: -640, h: 520, y: -190, sh: .3, cells: [22, 6], seed: 7.7 }
       ];
       for (const l of layers) {
-        const map = T.skyline.clone(); map.needsUpdate = true; map.wrapS = THREE.RepeatWrapping; map.repeat.set(l.rep, 1); map.offset.x = l.off;
-        const m = new THREE.Mesh(new THREE.PlaneGeometry(l.w, l.h), basic({ map, transparent: true, opacity: l.op, color: l.col, fog: false, depthWrite: false }));
-        m.position.set(0, l.y + l.h / 2, l.z); m.renderOrder = -10 + sky.length;
+        l.w = l.w || l.h * ar(l.k); l.off = 0;
+        const map = T[l.k].clone(); map.needsUpdate = true; map.wrapS = l.lit ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(l.w, l.h), cityMat(map, l.lit && T[l.lit], l.cells, l.seed));
+        m.position.set(0, l.y + l.h / 2, l.z); m.renderOrder = sky.length ? -12 + sky.length : -14;
         m.userData = l; add(m); sky.push(m);
       }
-      // 첨탑 꼭대기 자리를 그림에서 찾아 불빛 자리로 쓴다
-      const im = IMG.skyline, cv = document.createElement('canvas'), w = 336, h = Math.round(336 * im.height / im.width);
+      farLayer = sky[1];
+      // 첨탑 꼭대기 자리를 먼 빌딩 그림에서 찾아 항공 경고등 자리로 쓴다(켠 철탑 수만큼 켜진다)
+      const im = IMG.cityFar, cv = document.createElement('canvas'), w = 512, h = Math.round(512 * im.height / im.width);
       cv.width = w; cv.height = h; const cx = cv.getContext('2d'); cx.drawImage(im, 0, 0, w, h);
       const a = cx.getImageData(0, 0, w, h).data, pts = [];
-      for (let x = 2; x < w - 2; x += 1) for (let y = 2; y < h * .8; y++) {
-        if (a[(y * w + x) * 4 + 3] > 150) { if (a[((y - 2) * w + x) * 4 + 3] < 40) pts.push([x / w, y / h]); break; }
+      for (let x = 2; x < w - 2; x += 1) for (let y = 2; y < h * .7; y++) {
+        if (a[(y * w + x) * 4 + 3] > 170) { if (a[((y - 3) * w + x) * 4 + 3] < 50) pts.push([x / w, y / h]); break; }
       }
-      const R = mulberry(9), far = sky[0].userData;
-      const n = Math.min(150, pts.length), geo = new THREE.PlaneGeometry(1, 1);
-      cityLights = new THREE.InstancedMesh(geo, basic({ map: T.glow, color: '#ffffff', transparent: true, depthWrite: false, fog: false }), n * far.rep);
+      const R = mulberry(9);
+      const n = Math.min(110, pts.length), geo = new THREE.PlaneGeometry(1, 1);
+      cityLights = new THREE.InstancedMesh(geo, basic({ map: T.glow, color: '#ffffff', transparent: true, depthWrite: false, fog: false }), n);
       cityLights.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      cityLights.renderOrder = -9;
       const col = new THREE.Color();
-      let k = 0;
-      for (let r = 0; r < far.rep; r++) for (let i = 0; i < n; i++) {
+      for (let k = 0; k < n; k++) {
         const p = pts[Math.floor(R() * pts.length)];
-        cityLightData.push({ u: (r + p[0]) / far.rep, v: p[1], on: R(), size: 5 + R() * 9, ph: R() * 6.28, yellow: R() < .35 });
-        col.set(cityLightData[k].yellow ? C.yellow : C.red); cityLights.setColorAt(k, col); k++;
+        cityLightData.push({ u: p[0], v: p[1], on: .05 + R() * .95, size: 4 + R() * 7, ph: R() * 6.28, yellow: R() < .3 });
+        col.set(cityLightData[k].yellow ? C.yellow : C.red); cityLights.setColorAt(k, col);
       }
       add(cityLights);
     }
@@ -2248,7 +2279,7 @@ gl_Position = projectionMatrix * mvPosition;`);
       g.add(tunnelLamps, tunnelGlows);
       // 입구 · 출구(구멍을 뚫은 그림 판). 구멍이 도로 폭과 터널 높이에 맞도록 크기를 정했다
       const pw = (COURSE.roadHalf * 2 + .2) / .546, ph = pw * IMG.portal.height / IMG.portal.width;
-      const pm = basic({ map: T.portal, alphaTest: .4, side: THREE.DoubleSide });
+      const pm = basic({ map: T.portal, color: '#a2a8b4', alphaTest: .4, side: THREE.DoubleSide });
       for (const z of [0, -len]) {
         const p = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), pm);
         p.position.set(0, -ph * .018 + ph / 2 - .3, z + .2); g.add(p);
@@ -2261,7 +2292,7 @@ gl_Position = projectionMatrix * mvPosition;`);
     /* ---------- 정유 단지 구조물 · 변전소 · IDIOTAPE 전광탑 ---------- */
     const scenePool = [];
     function buildScenery() {
-      const mats = [0, 1, 2, 3].map(k => basic({ map: T['ind' + k], alphaTest: .45, side: THREE.DoubleSide }));
+      const mats = [0, 1, 2, 3].map(k => basic({ map: T['ind' + k], color: '#a2a8b4', alphaTest: .45, side: THREE.DoubleSide }));
       for (let i = 0; i < 26; i++) {
         const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mats[0]);
         m.userData = { mats, item: null }; m.visible = false; add(m); scenePool.push(m);
@@ -2922,10 +2953,9 @@ gl_Position = projectionMatrix * mvPosition;`);
       walls[1].material.map.offset.x = (-s / 24) % 1;
       T.ground.offset.y = (s / 320) % 1;
 
-      /* 원경: 굽이 방향만큼 옆으로 */
-      const hd = course.heading[Math.min(course.N - 1, Math.max(0, Math.floor(s)))];
-      sky[0].material.map.offset.x = sky[0].userData.off - hd * .16;
-      sky[1].material.map.offset.x = sky[1].userData.off - hd * .3;
+      /* 원경: 굽이 방향만큼 옆으로. 가까운 겹일수록 더 많이(코스 평균 방향 .25를 가운데로) */
+      const hd = course.heading[Math.min(course.N - 1, Math.max(0, Math.floor(s)))] - .25;
+      for (const l of sky) l.material.map.offset.x = l.userData.off - hd * l.userData.sh;
 
       /* 터널 안팎: 안개 · 원경. 정전 구간은 거의 까맣고, 내 전류가 천장 등을 켜는 자리만 보인다 */
       const tn = course.tunnel;
@@ -2950,7 +2980,7 @@ gl_Position = projectionMatrix * mvPosition;`);
       const fogCol = col.set(C.fog).lerp(TUNNEL_FOG, inTunnel * .9).lerp(DARK_FOG, darkK);
       scene.fog.color.copy(fogCol); scene.background.copy(fogCol);
       scene.fog.far = lerp(760 - inTunnel * 360, lampOn ? HAZARD.darkFarLive : HAZARD.darkFar, darkK); scene.fog.near = lerp(90 - inTunnel * 50, 3, darkK);
-      for (const l of sky) l.visible = inTunnel < .95;
+      for (const l of sky) { l.visible = inTunnel < .95; l.material.color.setScalar(1 - darkK * .85); }
       cityLights.visible = inTunnel < .95;
       tunnel.visible = s > tn.s0 - ahead - 40 && s < tn.s1 + behind + 20;
       tunnel.position.z = zOf(tn.s0);
@@ -3174,7 +3204,7 @@ gl_Position = projectionMatrix * mvPosition;`);
         sub.position.set(0, 0, -(sd));
         const op = clamp(1 - (sd - 600) / 2300, .08, 1);
         sub.children[0].material.opacity = op;
-        sub.children[0].material.color.set(col.set(C.fog).lerp(new THREE.Color('#ffffff'), op));
+        sub.children[0].material.color.set(col.set(C.fog).lerp(new THREE.Color('#b9bec9'), op));
         const total = run.lit / course.gates.length;
         subLights.forEach((q, k) => { const f = k / subLights.length; q.visible = finishGlow > f * .8 && f < total + .01; q.scale.setScalar(7 * (.8 + .2 * Math.sin(time * 7 + k))); });
         subRing.visible = finishGlow > 0 && total > .5;
@@ -3182,12 +3212,15 @@ gl_Position = projectionMatrix * mvPosition;`);
         if (subLogo) subLogo.visible = finishGlow > .5 && run.lit === course.gates.length;
       }
 
-      /* 원경 도시 불빛: 켠 철탑 수만큼 */
-      const far = sky[0], fu = far.userData, frac = run.lit / course.gates.length;
-      const show = mode === 'attract' ? .3 + .1 * Math.sin(time * .7) : Math.max(frac * .85, finishGlow * frac);
+      /* 원경 도시 불빛: 출발 직후엔 거의 다 꺼져 있다. 게이트를 지나 철탑이 켜지면 창문 · 간판이 블록 단위로 켜지고, 켠 철탑이 늘수록 더 켜진다 */
+      const far = farLayer, fu = far.userData, frac = run.lit / course.gates.length;
+      const litTo = mode === 'attract' ? .03 : run.lit > 0 ? Math.max(.18 + .82 * frac, finishGlow * frac) : 0;
+      cityLit += (litTo - cityLit) * Math.min(1, dt * (litTo > cityLit ? 1.6 : 3));
+      CITY_U.uLit.value = cityLit * (1 - darkK); CITY_U.uTime.value = time;
+      const show = cityLit * .95 * (1 - darkK);
       for (let k = 0; k < cityLightData.length; k++) {
         const d = cityLightData[k];
-        let u = (d.u * fu.rep + far.material.map.offset.x) / fu.rep; u = ((u % 1) + 1) % 1;
+        let u = d.u - far.material.map.offset.x; u = ((u % 1) + 1) % 1;
         const on = d.on < show;
         const x = (u - .5) * fu.w, y = fu.y + fu.h * (1 - d.v);
         const sc = on ? d.size * (.75 + .25 * Math.sin(time * 3 + d.ph)) : 0;
