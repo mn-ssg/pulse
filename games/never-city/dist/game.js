@@ -632,12 +632,19 @@
   const bgm = { buf:null, el:null, src:null, scrub:null, gain:null, pos0:0, t0:0, rate:1, pos:0, playing:false, active:false };
   fetch(BGM.src).then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
     .then(b => new OfflineAudioContext(2, 1, 44100).decodeAudioData(b))
-    .then(buf => { bgm.buf = buf; })
+    .then(buf => { bgm.buf = buf; bgmLate(); })
     .catch(e => {
       if (typeof e === 'number') return;
       const el = new Audio(); el.loop = true; el.preload = 'auto'; el.src = BGM.src;
-      el.addEventListener('canplaythrough', () => { bgm.el = el; }, { once:true });
+      el.addEventListener('canplaythrough', () => { bgm.el = el; bgmLate(); }, { once:true });
     });
+  // 곡 파일(5MB)이 판을 시작한 뒤에야 도착하면(키를 빨리 누름 · 느린 연결): 그때부터 신스 음악 대신 곡을 처음부터 튼다
+  // 일시정지 중에 도착하면 다시 시작할 때 처음부터
+  function bgmLate() {
+    if (bgm.active || !ac || !music.on) return;
+    bgm.active = true; bgm.pos = 0;
+    if (mode === 'play' || mode === 'enter') { bgm.rate = music.rate; bgmPlay(0); }
+  }
   const bgmLen = () => bgm.buf ? bgm.buf.duration : bgm.el && bgm.el.duration || 1;
   function bgmPlay(t) {
     bgmHalt();

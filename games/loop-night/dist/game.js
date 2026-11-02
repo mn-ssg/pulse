@@ -408,12 +408,21 @@
       const rev = new AudioBuffer({ length:buf.length, numberOfChannels:buf.numberOfChannels, sampleRate:buf.sampleRate });
       for (let c = 0; c < buf.numberOfChannels; c++) rev.getChannelData(c).set(buf.getChannelData(c).slice().reverse());
       bgm.rev = rev;
+      bgmLate();
     })
     .catch(e => {
       if (typeof e === 'number') return;
       const el = new Audio(); el.loop = true; el.preload = 'auto'; el.src = BGM.src;
-      el.addEventListener('canplaythrough', () => { bgm.el = el; }, { once:true });
+      el.addEventListener('canplaythrough', () => { bgm.el = el; bgmLate(); }, { once:true });
     });
+  // 곡 파일이 음악을 켠 뒤에야 도착하면(키를 빨리 누름 · 느린 연결): 그때부터 신스 음악 대신 곡을 처음부터 튼다
+  // 일시정지 · 되감기 · 게이트 통과 중에 도착하면 곡을 켜 두기만 하고, 그 연출이 끝날 때 게임이 곡을 다시 튼다
+  function bgmLate() {
+    if (bgm.active || !ac || !music.on) return;
+    bgm.active = true; bgm.pos = 0;
+    if (bgm.gain) bgm.gain.gain.value = BGM.volume; else bgm.el.volume = BGM.volume;
+    if ((mode === 'play' || mode === 'title') && !(S && (S.rw || S.warp))) bgmPlay(0);
+  }
   // 곡 위치 t(초)부터 재생. rev면 그 위치에서 거꾸로(rate배 빠르게) — 되감기 소리
   function bgmPlay(t, rev = false, rate = 1) {
     bgmHalt();
