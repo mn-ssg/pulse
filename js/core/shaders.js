@@ -24,6 +24,18 @@ void main(){
   gl_FragColor = vec4(c.rgb, al);
 }`;
 
+/* 게임기 화면 유리: 검정 바탕 위 아주 옅은 대각선 반사 · 가장자리 비네팅 (부팅 화면은 이 뒤에서 비친다) */
+export const GLASS_FS = `uniform float uOpacity; varying vec2 vUv;
+void main(){
+  float d = vUv.x*.55 + vUv.y*.85;
+  float refl = smoothstep(.40, .70, d)*(1. - smoothstep(.70, 1.08, d)) + .4*smoothstep(1.0, 1.35, d);
+  vec2 p = (vUv - .5)*vec2(1.45, 1.);
+  float vig = smoothstep(.5, .92, length(p));
+  float ar = refl*.07, av = vig*.3, a = ar + av;
+  vec3 c = vec3(.78,.93,1.)*ar/max(a, 1e-4);
+  gl_FragColor = vec4(c, a*uOpacity);
+}`;
+
 /* VHS 화면: 노이즈 · 트래킹 · 주사선 → 실제 영상 */
 export const SCREEN_FS = `uniform sampler2D map; uniform float uOpacity,uNoise,uTrackY,uTrack,uTime,uBright,uRadius,uAspect,uScan,uWhite; varying vec2 vUv;
 ${RBOX}

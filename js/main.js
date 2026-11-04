@@ -11,7 +11,7 @@ import { $, lerp, runTweens, RM } from './core/utils.js';
 import { buildTrace, initLogo, resizeLogo, wake, updatePulse, updateLogo, updateTrace } from './scenes/pulse.js';
 import { buildTape, buildWorld, resizeWorld, updateCamera, updateTape, updateWorld, updateLeds } from './scenes/world.js';
 import { buildPlayer, buildScreen, updateVhs, updateVideoState, initVideoControls, vid } from './scenes/vhs.js';
-import { games, buildGames, resizeGames, updateCollection, updateGamesFrame } from './scenes/games.js';
+import { games, buildGames, resizeGames, updateCollection, updateGamesFrame, qaPoints } from './scenes/games.js';
 import { buildHud, updateHud } from './ui/hud.js';
 import { buildTypography, fitTypography, updateTypography } from './ui/typography.js';
 import { initInput, noteGesture } from './ui/input.js';
@@ -85,4 +85,4 @@ async function start(){
 start();
 
 /* QA용 읽기 전용 상태 (브라우저 콘솔: __pulse.mode 등) */
-window.__pulse = { get mode(){ return S.mode; }, get p(){ return S.p; }, get boot(){ return V.boot; }, get ready(){ return games.ready; }, vid, wake };
+window.__pulse = { get mode(){ return S.mode; }, get p(){ return S.p; }, get boot(){ return V.boot; }, get ready(){ return games.ready; }, vid, wake, pts:qaPoints };

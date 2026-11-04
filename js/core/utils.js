@@ -7,6 +7,7 @@ export const ss = t => t*t*(3 - 2*t);
 export const eio = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
 export const eo = t => 1 - Math.pow(1 - t, 3);
 export const eob = t => { const c1 = 1.4, c3 = c1 + 1; return 1 + c3*Math.pow(t - 1, 3) + c1*Math.pow(t - 1, 2); };
+export const eos = t => { const c1 = .65, c3 = c1 + 1; return 1 + c3*Math.pow(t - 1, 3) + c1*Math.pow(t - 1, 2); };   // 아주 작은 오버슈트(약 1.5%)
 export const bump = (p, a, b) => Math.sin(Math.PI*seg(p, a, b));
 export const win = (p, a, b, c, d) => ss(seg(p, a, b))*(1 - ss(seg(p, c, d)));   // a→b 나타나고 c→d 사라짐
 export const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;

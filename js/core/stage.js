@@ -61,7 +61,7 @@ export function cropUV(geo, [u, v, w, h]){
   const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, u + uv.getX(i)*w, v + uv.getY(i)*h);
   uv.needsUpdate = true; return geo;
 }
-function rrShape(w, h, r){ const s = new THREE.Shape(), x = -w/2, y = -h/2; r = Math.min(r, w/2, h/2);
+export function rrShape(w, h, r){ const s = new THREE.Shape(), x = -w/2, y = -h/2; r = Math.min(r, w/2, h/2);
   s.moveTo(x+r, y); s.lineTo(x+w-r, y); s.quadraticCurveTo(x+w, y, x+w, y+r); s.lineTo(x+w, y+h-r); s.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
   s.lineTo(x+r, y+h); s.quadraticCurveTo(x, y+h, x, y+h-r); s.lineTo(x, y+r); s.quadraticCurveTo(x, y, x+r, y); return s; }
 export function chipShape(w, h, r, n){ const s = new THREE.Shape(), x = -w/2, y = -h/2;
