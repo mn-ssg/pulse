@@ -13,10 +13,13 @@ export function buildTypography(){
     const [a, b] = el.dataset.p.split(' ').map(Number);
     const items = [...el.querySelectorAll('[data-t], .ty-xl')].map(n => ({
       n, fx:n.dataset.fx || 'rise', t:(n.dataset.t || DEF_T.join(' ')).split(' ').map(Number), o:-1, tf:'' }));
-    return { el, a, b, items, on:false, kind:[...el.classList].find(c => c.startsWith('ty-') ) };
+    return { el, a, b, items, on:false, kind:[...el.classList].find(c => c.startsWith('ty-') ), letters:[] };
   });
-  // ELECTRICITY: 글자마다 깜빡이도록 나눈다
-  layer.querySelectorAll('[data-split]').forEach(n => { n.innerHTML = [...n.textContent].map(c => `<span>${c}</span>`).join(''); });
+  // ELECTRICITY: 글자마다 깜빡이도록 나눈다 (글자 요소는 한 번만 찾아 둔다)
+  for (const sc of scenes) sc.el.querySelectorAll('[data-split]').forEach(n => {
+    n.innerHTML = [...n.textContent].map(c => `<span>${c}</span>`).join('');
+    sc.letters.push(...n.querySelectorAll('span'));
+  });
 }
 
 /* 큰 단어는 화면 폭에 맞춰 글자 크기를 정한다 */
@@ -64,10 +67,10 @@ export function updateTypography(){
 function effects(sc, k, env){
   const el = sc.el;
   if (sc.kind === 'ty-elec') {                                         // 전류처럼 몇 글자가 튄다
-    el.querySelectorAll('[data-split] span').forEach(s => {
+    for (const s of sc.letters) {
       const hit = Math.random() < .06;
       s.style.opacity = hit ? .35 : 1; s.style.transform = hit ? `translateY(${(Math.random()*8 - 4).toFixed(1)}px)` : '';
-    });
+    }
     el.style.setProperty('--flick', (.55 + Math.random()*.45).toFixed(2));
   } else if (sc.kind === 'ty-city') {                                  // 멈춘 도시 → 전류가 지나간 곳부터 켜진다
     el.style.setProperty('--on', ss(clamp((k - .3)/.35)).toFixed(4));
