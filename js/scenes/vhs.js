@@ -206,13 +206,11 @@ export function updateVideoState(dt){
   const want = S.mode === 'scroll' && V.boot > 1.25 && p > .378 && p < .5 && !V.userPaused && !V.ended && document.visibilityState === 'visible';
   if (want && vid.paused) playVideo(); else if (!want && !vid.paused && !document.fullscreenElement) vid.pause();
   V.shake *= Math.exp(-dt*8);
-  // 영상이 끝나면 게임으로 넘어간다
-  if (V.endTimer >= 0) { V.endTimer -= dt; if (V.endTimer < 0 && S.mode === 'scroll' && p > .38 && p < .5) scrollToP(.655); }
 }
 
 /* ---------- 조작 버튼 (한 번만 연결) ---------- */
 export function initVideoControls(noteGesture){
-  vid.addEventListener('ended', () => { V.ended = true; V.endTimer = 1.4; });
+  vid.addEventListener('ended', () => { V.ended = true; });
   $('#vPlay').addEventListener('click', () => { noteGesture(); togglePlay(); });
   $('#vSnd').addEventListener('click', () => { noteGesture(); vid.muted = !vid.muted; V.forceMute = vid.muted; if (!vid.muted && vid.volume === 0) vid.volume = .8; if (vid.paused && !vid.muted) { V.userPaused = false; playVideo(); } });
   $('#vFull').addEventListener('click', () => {

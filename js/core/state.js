@@ -20,7 +20,7 @@ export const mouse = { x:0, y:0, tx:0, ty:0 };
 export const cam = { pos:new V3(0, 0, 9), look:new V3(), sPos:new V3(), sLook:new V3() };
 export const W = { awake:false, t:0, energy:0 };                 // PULSE: 정지 → 첫 박동 → 깨어남
 export const B = { phase:.5, bpm:66, env:0, extra:0 };           // 박동 시계
-export const V = { boot:-1, userPaused:false, ended:false, pending:false, shake:0, endTimer:-1, forceMute:false };   // 영상
+export const V = { boot:-1, userPaused:false, ended:false, pending:false, shake:0, forceMute:false };   // 영상
 
 export const maxScroll = () => Math.max(1, document.documentElement.scrollHeight - innerHeight);
 
